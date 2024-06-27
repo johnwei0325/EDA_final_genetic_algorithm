@@ -93,12 +93,13 @@ def genetic_algorithm(estimator, num_attributes, population_size=50, num_generat
             fitnesses = []
             for individual in population:
                 score = 0
-                if individual in permutations_scores:
-                    score = permutations_scores[individual]
+                if tuple(individual) in permutations_scores:
+                    score = permutations_scores[tuple(individual)]
                 else:
                     score = calculate_fitness(individual, estimator)
-                    permutations_scores[individual] = score
+                    permutations_scores[tuple(individual)] = score
                 fitnesses.append(score)
+                
             # fitnesses = [calculate_fitness(individual, estimator) for individual in population]
             
             if min(fitnesses) < best_fitness:
@@ -119,7 +120,7 @@ def genetic_algorithm(estimator, num_attributes, population_size=50, num_generat
             
             population = next_generation[:population_size]
     except TimeoutError as e:
-        print(str(e))
+        print(str(e), 'j')
     finally:
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -137,6 +138,7 @@ def score_estimator(permutation):
     if not converted_netlist_abc:
         return 0
     
+    print("permu", permutation)
     genlib_filename = generate_genlib(data, permutation)
     script_filename, mapped_netlist = create_abc_script(converted_netlist_abc, genlib_filename)
 
@@ -406,10 +408,7 @@ def main():
         print(f"Elapsed time: {elapsed_time:.2f} seconds")
         signal.alarm(0)  # Disable the alarm
     
-
-if __name__ == "__main__":
-    # main()
-
+def main():
     args = parse_arguments()
     with open(args.library, 'r') as f:
         data = json.load(f)
@@ -417,7 +416,7 @@ if __name__ == "__main__":
     num_attributes = len(attributes) - 2
     best_netlist = args.output
     best_genlib = 'best_genlib.genlib'
-
+    print(num_attributes)
     best_permutation, best_score = genetic_algorithm(score_estimator, num_attributes=num_attributes)
     print(f"Best permutation: {best_permutation}, Best score: {best_score}")
     
@@ -427,3 +426,8 @@ if __name__ == "__main__":
     converted_netlist = convert_netlist_to_output_format(mapped_netlist)
     os.rename(converted_netlist, best_netlist)
     os.rename(genlib_file, best_genlib)
+
+if __name__ == "__main__":
+    main()
+
+    
